@@ -1,0 +1,489 @@
+import collections
+import random
+
+class TournamentScoringSystem:
+    def __init__(self, tournament_name="My Tournament"):
+        self.tournament_name = tournament_name
+        self.teams = {
+            "Team A": ["Teddy", "James", "Stella", "Zena", "Nancy"],
+            "Team B": ["Zamani", "Agbor", "Voilet", "Balo", "Grace"],
+            "Team C": ["Peter", "Scott", "Chloegrams", "Pretty", "Matt"],
+            "Team D": ["Anny", "Rena", "Halaand", "Rues", "Ethan"]
+        }
+        self.individuals = [
+            "Mbong", "Lum", "Bisonna", "Nkwain", "Besong", "Folefac", "Abilichu", "Bessem",
+            "Masson", "Kenny", "Challamet", "Benny", "Uzo", "Ngode", "Ngame",
+            "Ragnar", "Uthred", "Onepunch", "Naruto", "Uchiha"
+        ]
+        self.event_type = None # 'team' or 'individual'
+        self.selected_event = None
+        # event_participants will store quiz_points only for this new model
+        self.event_participants = {} # Stores participant_name: {'quiz_points': QP}
+        # The 'matches' list will now record the user-played quiz only
+        self.matches = [] # Stores list of {'event': 'Event Name', 'event_type': 'team'/'individual', 'participant': 'Name', 'quiz_points': QP}
+
+        self.team_events_list = [
+            "Basketball", "Football", "Handball",
+            "Volleyball", "Ice Hockey"
+        ]
+        self.individual_events_list = [
+            "Bowling tournament", "Martial Arts", "Surfing tournament",
+            "Boxing tournament", "Golf tournament"
+        ]
+
+        # --- Quiz Data ---
+        self.quiz_data = {
+            # Individual Events
+            "Bowling tournament": [
+                {"question": "What is a common way of breaking a tie in a bowling tournament?", "options": {"A": "Coin Flip", "B": "Rock-paper-scissors", "C": "One-ball roll-off", "D": "Arm wrestling"}, "correct": "C", "almost_correct": ["A"]},
+                {"question": "Which of the following is part of a bowler's dressing code?", "options": {"A": "Jeans", "B": "Athletic shoes", "C": "Collared shirt", "D": "T-shirt"}, "correct": "C", "almost_correct": ["D"]},
+                {"question": "For in a standard 10-pin bowling game, how many pins must you knock down with your first ball for it to be considered a strike?", "options": {"A": "7", "B": "8", "C": "9", "D": "10"}, "correct": "D", "almost_correct": ["B"]}
+            ],
+            "Martial Arts": [
+                {"question": "What is KIHON in martial arts training?", "options": {"A": "Sparring", "B": "Basic techniques", "C": "Medication", "D": "Forms"}, "correct": "B", "almost_correct": ["D"]},
+                {"question": "In which country did Taekwondo originate?", "options": {"A": "Japan", "B": "China", "C": "Korea", "D": "Thailand"}, "correct": "C", "almost_correct": ["D"]},
+                {"question": "Which martial arts is know as the way of the empty hand?", "options": {"A": "Judo", "B": "Karate", "C": "Taekwondo", "D": "Kung Fu"}, "correct": "B", "almost_correct": ["C"]}
+            ],
+            "Surfing Tournament": [
+                {"question": "What is the term for a surfer intentionally paddling in front of another surfer to catch a wave, thus preventing the other surfer from catching it?", "options": {"A": "Drop in", "B": "Cutback", "C": "Tube ride", "D": "Wipeout"}, "correct": "A", "almost_correct": ["C"]},
+                {"question": "What does LEASH refer to in surfing equipment?", "options": {"A": "The wax applied to the board", "B": "The rope that connects the surfer to the board", "C": "The fins on the board", "D": "The wetsuit worn by the surfer"}, "correct": "B", "almost_correct": ["A"]},
+                {"question": "What is the Green room in surfing slang?", "options": {"A": "Area where surfers wait for their heat", "B": "A surf shop", "C": "The inside of a barreling wave", "D": "The lifeguard station"}, "correct": "C", "almost_correct": ["A"]}
+            ],
+            "Boxing Tournament": [
+                {"question": "How many minutes comprise of a round in proffesional boxing?", "options": {"A": "1min", "B": "2min", "C": "3min", "D": "5min"}, "correct": "C", "almost_correct": ["B"]},
+                {"question": "Which of the following is not a type of punch commonly used in boxing?", "options": {"A": "Jab", "B": "Hook", "C": "Uppercut", "D": "Overhead Smash"}, "correct": "D", "almost_correct": ["B", "C"]},
+                {"question": "In boxing, what does the term TKO stand for?", "options": {"A": "Total Knock Out", "B": "Technical Knock Out", "C": "Tactical Knock Out", "D": "Training Knock Out"}, "correct": "B", "almost_correct": ["D"]}
+            ],
+            "Golf Tournament": [
+                {"question": "What is the standart number of holes in a round of golf?", "options": {"A": "9", "B": "12", "C": "18", "D": "21"}, "correct": "C", "almost_correct": ["A"]},
+                {"question": "Which of the following is not a type of golf club?", "options": {"A": "Putter", "B": "Wedge", "C": "Driver", "D": "Sweeper"}, "correct": "D", "almost_correct": ["C"]},
+                {"question": "What is the max number of clubs a player is allowed to carry during round of golf?", "options": {"A": "12", "B": "13", "C": "14", "D": "15"}, "correct": "C", "almost_correct": ["A"]}
+            ],
+            # Team Events
+            "Basketball": [
+                {"question": "How many point is a free throw worth?", "options": {"A": "4", "B": "3", "C": "1", "D": "6"}, "correct": "C", "almost_correct": ["A"]},
+                {"question": "How many player are on a basketball team on the court at one time?", "options": {"A": "12", "B": "7", "C": "8", "D": "5"}, "correct": "D", "almost_correct": ["B", "A"]}
+            ],
+            "Football": [
+                {"question": "How many minutes are there in a regular match not including stoppage time?", "options": {"A": "60", "B": "90", "C": "120", "D": "45"}, "correct": "B", "almost_correct": ["C"]},
+                {"question": "How many player are on a soccer team on the pitch at same time?", "options": {"A": "10", "B": "11", "C": "12", "D": "9"}, "correct": "B", "almost_correct": ["A"]}
+            ],
+            "Handball": [
+                {"question": "In dodgeball, what happens when a player is hit by a ball?", "options": {"A": "They get a bonus point", "B": "They must switch teams", "C": "They are out", "D": "They catch the ball"}, "correct": "C", "almost_correct": ["D"]},
+                {"question": "What is the best strategy in dodgeball?", "options": {"A": "Stand still", "B": "Throw upward only", "C": "Dodge and catch", "D": "Talk to the other team"}, "correct": "C", "almost_correct": []}
+            ],
+            "Team Scavenger Hunt": [
+                {"question": "What is the goal of a scavenger hunt?", "options": {"A": "Collect the most items", "B": "Win a race", "C": "Hide objects", "D": "Build a fort"}, "correct": "A", "almost_correct": []},
+                {"question": "Which of these is most important in a scavenger hunt?", "options": {"A": "Singing ability", "B": "Time management", "C": "Strength", "D": "Swimming skills"}, "correct": "B", "almost_correct": []}
+            ],
+            "Giant Connect Four": [
+                {"question": "How many pieces in a row are needed to win Connect Four?", "options": {"A": "3", "B": "4", "C": "5", "D": "6"}, "correct": "B", "almost_correct": ["C"]},
+                {"question": "What is a good strategy in Connect Four?", "options": {"A": "Stack pieces in one column", "B": "Place randomly", "C": "Block opponent’s moves", "D": "Start from the top row"}, "correct": "C", "almost_correct": ["A"]}
+            ]
+        }
+
+    def choose_event_type(self):
+        while True:
+            choice = input("Is this a (T)eam event or an (I)ndividual event? ").lower()
+            if choice == 't':
+                self.event_type = 'team'
+                print("Team event selected.")
+                return True
+            elif choice == 'i':
+                self.event_type = 'individual'
+                print("Individual event selected.")
+                return True
+            else:
+                print("Invalid choice. Please enter 'T' for Team or 'I' for Individual.")
+
+    def select_event(self):
+        if self.event_type is None:
+            print("Please choose an event type first (Team or Individual).")
+            return False
+
+        if self.event_type == 'team':
+            print("\n--- Team Events ---")
+            for i, event in enumerate(self.team_events_list):
+                print(f"{i+1}. {event}")
+            while True:
+                try:
+                    choice = int(input(f"Select a team event (1-{len(self.team_events_list)}): "))
+                    if 1 <= choice <= len(self.team_events_list):
+                        self.selected_event = self.team_events_list[choice-1]
+                        print(f"'{self.selected_event}' selected.")
+                        self._initialize_participants_for_event() # Initialize all with 0 quiz points
+                        return True
+                    else:
+                        print("Invalid number. Please try again.")
+                except ValueError:
+                    print("Invalid input. Please enter a number.")
+        else: # individual event
+            print("\n--- Individual Events ---")
+            for i, event in enumerate(self.individual_events_list):
+                print(f"{i+1}. {event}")
+            while True:
+                try:
+                    choice = int(input(f"Select an individual event (1-{len(self.individual_events_list)}): "))
+                    if 1 <= choice <= len(self.individual_events_list):
+                        self.selected_event = self.individual_events_list[choice-1]
+                        print(f"'{self.selected_event}' selected.")
+                        self._initialize_participants_for_event() # Initialize all with 0 quiz points
+                        return True
+                    else:
+                        print("Invalid number. Please try again.")
+                except ValueError:
+                    print("Invalid input. Please enter a number.")
+        return False
+
+    def _initialize_participants_for_event(self):
+        # Reset participants and their quiz points for the new event
+        self.event_participants = {}
+        if self.event_type == 'team':
+            for team_name in self.teams:
+                self.event_participants[team_name] = {'quiz_points': 0}
+        else: # individual
+            for individual_name in self.individuals:
+                self.event_participants[individual_name] = {'quiz_points': 0}
+        print(f"Participants initialized for '{self.selected_event}' with 0 quiz points.")
+
+    def display_teams(self):
+        print("\n--- Available Teams ---")
+        team_names_list = list(self.teams.keys())
+        for i, team_name in enumerate(team_names_list):
+            print(f"{i+1}. {team_name}: {', '.join(self.teams[team_name])}")
+        return team_names_list
+
+    def rename_team(self, team_name_to_rename):
+        if team_name_to_rename not in self.teams:
+            print(f"Error: Team '{team_name_to_rename}' not found.")
+            return False
+
+        new_team_name = input(f"Enter the new name for '{team_name_to_rename}': ").strip()
+        if not new_team_name:
+            print("New team name cannot be empty.")
+            return False
+        if new_team_name in self.teams:
+            print(f"Error: Team '{new_team_name}' already exists.")
+            return False
+
+        # Create a new entry with the new name and transfer data
+        self.teams[new_team_name] = self.teams.pop(team_name_to_rename)
+        # Update event_participants if this event is active (transfer current quiz_points)
+        if self.event_type == 'team' and team_name_to_rename in self.event_participants:
+            self.event_participants[new_team_name] = self.event_participants.pop(team_name_to_rename)
+
+        print(f"Team '{team_name_to_rename}' renamed to '{new_team_name}'.")
+        return True
+
+
+    def display_individuals(self):
+        print("\n--- Individual Participants ---")
+        for i, name in enumerate(self.individuals):
+            print(f"{i+1}. {name}")
+
+    def replace_individual(self):
+        self.display_individuals()
+        while True:
+            try:
+                index_to_replace = int(input(f"Enter the number of the individual to replace (1-{len(self.individuals)}), or 0 to cancel: ")) - 1
+                if index_to_replace == -1:
+                    print("Replacement cancelled.")
+                    return False
+                if 0 <= index_to_replace < len(self.individuals):
+                    old_name = self.individuals[index_to_replace]
+                    new_name = input(f"Enter the new name for '{old_name}': ").strip()
+                    if new_name:
+                        if new_name in self.individuals:
+                            print(f"Error: '{new_name}' already exists as an individual. Please choose a different name.")
+                            continue
+
+                        self.individuals[index_to_replace] = new_name
+                        # Update event_participants if this event is active (transfer current quiz_points)
+                        if self.event_type == 'individual' and old_name in self.event_participants:
+                            self.event_participants[new_name] = self.event_participants.pop(old_name)
+                        print(f"'{old_name}' has been replaced with '{new_name}'.")
+                        self.display_individuals()
+                        return True
+                    else:
+                        print("New name cannot be empty.")
+                else:
+                    print("Invalid number. Please try again.")
+            except ValueError:
+                print("Invalid input. Please enter a number.")
+        return False
+
+
+    def _run_quiz(self, participant_name):
+        if self.selected_event not in self.quiz_data:
+            print(f"No quiz data available for {self.selected_event}.")
+            return 0
+
+        questions = self.quiz_data[self.selected_event]
+        num_questions = 2 if self.event_type == 'team' else 3
+
+        print(f"\n--- Quiz for {participant_name} in {self.selected_event} ---")
+
+        selected_questions = random.sample(questions, min(num_questions, len(questions)))
+
+        current_quiz_points = 0
+        correct_answers_count = 0
+
+        for i, q_data in enumerate(selected_questions):
+            print(f"\nQuestion {i+1}: {q_data['question']}")
+            options_keys = list(q_data['options'].keys())
+            random.shuffle(options_keys)
+            for key in options_keys:
+                print(f"{key}) {q_data['options'][key]}")
+
+            while True:
+                answer = input("Your answer (e.g., A, B, C, D): ").upper()
+                if answer in q_data['options']:
+                    break
+                else:
+                    print("Invalid option. Please choose A, B, C, or D.")
+
+            if answer == q_data['correct']:
+                if self.event_type == 'team':
+                    current_quiz_points += 5
+                else: # individual
+                    current_quiz_points += 3
+                correct_answers_count += 1
+                print("Correct!")
+            elif answer in q_data['almost_correct']:
+                current_quiz_points += 1
+                print("Almost correct!")
+            else:
+                current_quiz_points += 1
+                print(f"Incorrect. The correct answer was {q_data['correct']}) {q_data['options'][q_data['correct']]}.")
+
+        if self.event_type == 'individual' and correct_answers_count == num_questions:
+            if current_quiz_points < 10: # Ensure total is 10, not just adding 10
+                current_quiz_points = 10
+            print(f"🎉 All correct! 10 points awarded for {participant_name}!")
+        else:
+             print(f"Quiz completed for {participant_name}.")
+
+        print(f"Total quiz points for {participant_name}: {current_quiz_points}")
+        return current_quiz_points
+
+
+    def record_and_generate_all_quiz_results(self, user_participant, user_quiz_points):
+        if self.selected_event is None:
+            print("Error: No event selected. Cannot record quiz results.")
+            return
+
+        # Update the user-controlled participant's score
+        if user_participant in self.event_participants:
+            self.event_participants[user_participant]['quiz_points'] = user_quiz_points
+        else:
+            print(f"Warning: User participant '{user_participant}' not found in current event participants.")
+            return
+
+        # Record the user's quiz result in matches log
+        self.matches.append({
+            'event': self.selected_event,
+            'event_type': self.event_type,
+            'participant': user_participant,
+            'quiz_points': user_quiz_points
+        })
+
+        # Generate scores for all other participants
+        min_quiz_points = 2 if self.event_type == 'team' else 3
+        max_quiz_points = 10 # Max points for both types
+
+        for participant_name in list(self.event_participants.keys()): # Iterate over a copy of keys
+            if participant_name != user_participant:
+                # Generate random points within constraints
+                random_points = random.randint(min_quiz_points, max_quiz_points)
+                self.event_participants[participant_name]['quiz_points'] = random_points
+                # No longer print "(simulated)" or "Simulating..." messages
+
+
+    def get_current_event_standings(self):
+        if not self.selected_event:
+            print("No event selected yet.")
+            return
+
+        if not self.event_participants:
+            print(f"\nNo participants initialized for {self.selected_event}.")
+            return
+
+        print(f"\n--- {'Team Scores Leaderboard' if self.event_type == 'team' else 'Individual Scores Leaderboard'} ---")
+
+        # Sort by quiz_points in descending order
+        sorted_participants = sorted(
+            self.event_participants.items(),
+            key=lambda item: item[1]['quiz_points'], # Sort only by quiz_points
+            reverse=True
+        )
+
+        for i, (name, stats) in enumerate(sorted_participants):
+            print(f"{i+1}. {name}: {stats['quiz_points']} points")
+
+
+    def display_all_recorded_matches(self):
+        if not self.matches:
+            print("\nNo matches have been played yet for any event.")
+            return
+
+        print(f"\n--- All Recorded Quiz Results for {self.tournament_name} ---")
+        for match in self.matches:
+            print(f"[{match['event']} ({match['event_type'].capitalize()})] {match['participant']} (Quiz Pts: {match['quiz_points']})")
+        print("-" * 70)
+
+
+    def select_team_participant(self): # Renamed to singular
+        selected_participant = None
+        available_teams = list(self.teams.keys())
+
+        if not available_teams:
+            print("No teams available.")
+            return None
+
+        while True:
+            self.display_teams()
+            rename_choice = input("Do you want to (R)ename a team, (S)elect a team to play, or (B)ack to start? (R/S/B): ").lower()
+            if rename_choice == 'r':
+                try:
+                    team_num = int(input(f"Enter the number of the team to rename (1-{len(available_teams)}): ")) - 1
+                    if 0 <= team_num < len(available_teams):
+                        team_name_to_rename = available_teams[team_num]
+                        if self.rename_team(team_name_to_rename):
+                            available_teams = list(self.teams.keys()) # Update after rename
+                    else:
+                        print("Invalid team number.")
+                except ValueError:
+                    print("Invalid input. Please enter a number.")
+            elif rename_choice == 's':
+                break
+            elif rename_choice == 'b':
+                return None # Signal to go back
+            else:
+                print("Invalid choice. Please enter 'R', 'S', or 'B'.")
+
+        while selected_participant is None:
+            try:
+                self.display_teams() # Show updated list after potential renames
+                choice_str = input(f"Enter the number of the team to select (1-{len(available_teams)}): ")
+                team_idx = int(choice_str) - 1
+
+                if 0 <= team_idx < len(available_teams):
+                    chosen_team_name = available_teams[team_idx]
+                    selected_participant = chosen_team_name
+                    print(f"Team '{chosen_team_name}' selected to play.")
+                else:
+                    print("Invalid team number.")
+            except ValueError:
+                print("Invalid input. Please enter a number.")
+
+        return selected_participant
+
+
+    def select_individual_participant(self): # Renamed to singular
+        selected_participant = None
+
+        if not self.individuals:
+            print("No individuals available.")
+            return None
+
+        while True:
+            self.display_individuals()
+            manage_choice = input("Do you want to (R)eplace an individual, (S)elect an individual to play, or (B)ack to start? (R/S/B): ").lower()
+            if manage_choice == 'r':
+                self.replace_individual()
+            elif manage_choice == 's':
+                break
+            elif manage_choice == 'b':
+                return None # Signal to go back
+            else:
+                print("Invalid choice. Please enter 'R', 'S', or 'B'.")
+
+        while selected_participant is None:
+            try:
+                self.display_individuals()
+                choice_str = input(f"Enter the number of the individual to select (1-{len(self.individuals)}): ")
+                ind_idx = int(choice_str) - 1
+
+                if 0 <= ind_idx < len(self.individuals):
+                    chosen_ind_name = self.individuals[ind_idx]
+                    selected_participant = chosen_ind_name
+                    print(f"Individual '{chosen_ind_name}' selected to play.")
+                else:
+                    print("Invalid individual number.")
+            except ValueError:
+                print("Invalid input. Please enter a number.")
+
+        return selected_participant
+
+
+# --- Main CLI execution flow ---
+def run_tournament_cli():
+    tournament = TournamentScoringSystem("Annual Sports Day")
+
+    print("\n--- Welcome to the Tournament Scoring System! ---")
+    print("Let's set up your event.\n")
+
+    # This loop allows the user to start new events repeatedly
+    while True:
+        # Step 1: Choose Event Type
+        if not tournament.choose_event_type():
+            continue
+
+        # Step 2: Select Event Name
+        if not tournament.select_event():
+            print("Event selection cancelled. Returning to Event Type selection.")
+            tournament.event_type = None # Reset event type
+            continue
+
+        # Step 3: Select Participant
+        user_participant = None
+        if tournament.event_type == 'team':
+            user_participant = tournament.select_team_participant()
+        else: # individual
+            user_participant = tournament.select_individual_participant()
+
+        if user_participant: # Ensure a participant was successfully selected
+            # Step 4: Direct to Quiz
+            if tournament.selected_event in tournament.quiz_data:
+                user_quiz_points = tournament._run_quiz(user_participant)
+                tournament.record_and_generate_all_quiz_results(user_participant, user_quiz_points)
+            else:
+                print(f"\nNo quiz available for '{tournament.selected_event}'. Quiz skipped.")
+                # If no quiz, generate all results with 0 quiz points initially
+                tournament.record_and_generate_all_quiz_results(user_participant, 0)
+        else:
+            print("Participant selection cancelled. Returning to Event Type selection.")
+            tournament.event_type = None # Reset event type if participant selection was cancelled
+            tournament.selected_event = None # Also reset selected event
+            tournament.event_participants = {} # Clear participants for new event
+            continue
+
+        # --- After event setup and quiz, offer main options ---
+        while True:
+            print("\n--- Event Options ---")
+            print("1. View Current Event Standings")
+            print("2. View All Recorded Matches (Your Quizzes)")
+            print("3. Start a New Event")
+            print("4. Exit Tournament System")
+
+            choice = input("Enter your choice: ")
+
+            if choice == '1':
+                tournament.get_current_event_standings()
+            elif choice == '2':
+                tournament.display_all_recorded_matches()
+            elif choice == '3':
+                print("\nStarting a new event. The current event context will be cleared for the new setup.")
+                # Clear event-specific state for a fresh start for the next loop iteration
+                tournament.event_type = None
+                tournament.selected_event = None
+                tournament.event_participants = {} # Clear participants for new event
+                break # Break inner loop, go back to top of outer loop for new event setup
+            elif choice == '4':
+                print("Exiting tournament system. Goodbye!")
+                return # Exit the function, ending the program
+            else:
+                print("Invalid choice. Please try again.")
+
+if __name__ == "__main__":
+    run_tournament_cli()
