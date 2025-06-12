@@ -70,19 +70,19 @@ class TournamentScoringSystem:
             ],
             "Handball": [
                 {"question": "In dodgeball, what happens when a player is hit by a ball?", "options": {"A": "They get a bonus point", "B": "They must switch teams", "C": "They are out", "D": "They catch the ball"}, "correct": "C", "almost_correct": ["D"]},
-                {"question": "What is the best strategy in dodgeball?", "options": {"A": "Stand still", "B": "Throw upward only", "C": "Dodge and catch", "D": "Talk to the other team"}, "correct": "C", "almost_correct": []}
+                {"question": "What is the best strategy in dodgeball?", "options": {"A": "Stand still", "B": "Throw upward only", "C": "Dodge and catch", "D": "Talk to the other team"}, "correct": "C", "almost_correct": ["D"]}
             ],
-            "Team Scavenger Hunt": [
-                {"question": "What is the goal of a scavenger hunt?", "options": {"A": "Collect the most items", "B": "Win a race", "C": "Hide objects", "D": "Build a fort"}, "correct": "A", "almost_correct": []},
-                {"question": "Which of these is most important in a scavenger hunt?", "options": {"A": "Singing ability", "B": "Time management", "C": "Strength", "D": "Swimming skills"}, "correct": "B", "almost_correct": []}
+            "Volleyball": [
+                {"question": "What is the first hit to start a volleyball play called?", "options": {"A": "Spike", "B": "Set", "C": "Serve", "D": "Block"}, "correct": "C", "almost_correct": ["A"]},
+                {"question": "How many times must a team hit the ball before it can go over the net?", "options": {"A": "1", "B": "2", "C": "3", "D": "Unlimited"}, "correct": "C", "almost_correct": ["A"]}
             ],
-            "Giant Connect Four": [
-                {"question": "How many pieces in a row are needed to win Connect Four?", "options": {"A": "3", "B": "4", "C": "5", "D": "6"}, "correct": "B", "almost_correct": ["C"]},
-                {"question": "What is a good strategy in Connect Four?", "options": {"A": "Stack pieces in one column", "B": "Place randomly", "C": "Block opponent’s moves", "D": "Start from the top row"}, "correct": "C", "almost_correct": ["A"]}
+            "Ice Hockey": [
+                {"question": "What is used to stop the puck?", "options": {"A": "Gloves", "B": "Stick", "C": "Skates", "D": "Helmet"}, "correct": "A", "almost_correct": ["C"]},
+                {"question": "What is it called when a player interferce with an opponent illegally?", "options": {"A": "Icing", "B": "Offside", "C": "Penalty", "D": "Face-off"}, "correct": "C", "almost_correct": ["A"]}
             ]
         }
 
-    def choose_event_type(self):
+    def choose_event_type(self): 
         while True:
             choice = input("Is this a (T)eam event or an (I)ndividual event? ").lower()
             if choice == 't':
